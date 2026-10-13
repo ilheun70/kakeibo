@@ -22,7 +22,8 @@ Google Apps Script Webアプリ（gas/）
 
 - フロントエンド：素のHTML / CSS / JavaScript（ESモジュール）。ビルド工程やフレームワークは使わず、`/docs` をそのまま公開する。
 - バックエンド：Google Apps Script（GAS）。claspでローカルの `gas/` と同期する。
-- 秘密情報（`GEMINI_API_KEY`、`APP_TOKEN`、`GEMINI_MODEL`）は、GASのスクリプトプロパティにのみ保存する。
+- 秘密情報（`GEMINI_API_KEY`、`APP_TOKEN`、`GEMINI_MODEL`、`SPREADSHEET_ID`）は、GASのスクリプトプロパティにのみ保存する。
+  - `SPREADSHEET_ID` が必要なのは、Webアプリとして実行中は `SpreadsheetApp.getActiveSpreadsheet()` が使えず、`openById()` で開くため（https://developers.google.com/apps-script/guides/bound）。
 - 認証：GASはWebアプリとして「自分として実行／全員アクセス可」で公開する。そのため、すべてのリクエストで `APP_TOKEN` を照合する。トークンは各端末で初回に手入力し、localStorageに保存する。
 
 ## ディレクトリ構成
