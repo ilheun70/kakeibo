@@ -163,11 +163,26 @@ Windows では、PowerShell を **通常の方法で** 開いてください（�
 
 ### 6. 動作確認（curl）
 
+bash で実行します。Windows では PowerShell ではなく **Git Bash** を使います（Git for Windows に curl が同梱されています）。
+
+> **Git Bash での貼り付けは Shift+Insert か右クリックのメニューで行う**
+> Git Bash の端末（mintty）では、初期設定の Ctrl+V は貼り付けになりません。
+> 押すと制御文字（`\026`）が入力され、curl が `(3) URL rejected: Malformed input to a URL function` で失敗します。
+
 トークンをコマンド履歴に残さないよう、`read -s` で入力します。
+`read` の行は、コピーせずに日本語入力オフで手入力すると確実です。
 
 ```sh
 read -rs APP_TOKEN        # トークンを入力（画面には表示されない）
 read -r GAS_URL           # /exec で終わるURLを入力
+
+# 貼り付け時に混じった制御文字・空白を取り除く
+APP_TOKEN=${APP_TOKEN//[[:cntrl:][:space:]]/}
+GAS_URL=${GAS_URL//[[:cntrl:][:space:]]/}
+
+# 値を表示せずに確認する（どちらも何も表示されなければOK）
+printf '%s' "$APP_TOKEN" | LC_ALL=C tr -d 'A-Za-z0-9' | od -An -c
+printf '%s' "$GAS_URL" | LC_ALL=C tr -d 'A-Za-z0-9:/._-' | od -An -c
 
 # 応答確認 → {"ok":true,"message":"pong"}
 curl -sSL -H 'Content-Type: text/plain' \
@@ -212,7 +227,7 @@ curl -sSL "$GAS_URL"
 
 - [ ] Phase 0：レシート読み取り精度の検証
 - [x] Phase 1：リポジトリ初期化
-- [ ] Phase 2：スプレッドシートとGASの土台
+- [x] Phase 2：スプレッドシートとGASの土台
 - [ ] Phase 3：手動入力でフロント→GAS→シートを一周させる
 - [ ] Phase 4：レシート読み取り
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
