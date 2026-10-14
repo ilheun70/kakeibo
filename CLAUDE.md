@@ -49,12 +49,17 @@ Google Apps Script Webアプリ（gas/）
 
 - スマホ優先で、iPadでも崩れないレスポンシブ設計にする。UIは日本語。
 - ホーム画面に追加してWebアプリとして使う前提で、`manifest.json` とアイコンは最初の画面と同時に用意する。
-- 撮影は `<input type="file" accept="image/*">` を使う。ホーム画面から起動したWebアプリで撮影できない不具合が過去に報告されているため、実機で確認するまでは「写真ライブラリから選ぶ」でも運用できる作りにしておく。
+- 撮影は `<input type="file" accept="image/*">` を使う。ホーム画面から起動したWebアプリで撮影できない不具合が過去に報告されていた。
+  - 2026-10-14、iPhone・iPad のホーム画面Webアプリで、撮影と写真ライブラリからの選択の両方ができることを実機で確認した（iOS のバージョンは未記録）。
+  - OS の更新で挙動が変わる可能性があるため、「写真ライブラリから選ぶ」でも運用できる作りは維持する。
 - レシート読み取りの結果は、必ず確認・修正画面を経てから保存する。この確認画面は手動入力フォームと共通にする。
 
 ## GAS実装の注意
 
 - フロントからのPOSTは `Content-Type: text/plain` でJSON文字列を送る。`application/json` を付けるとCORSエラーになると報告されているため（公式ドキュメントでは未確認）。
+  - `text/plain` の POST はブラウザの事前確認リクエスト（プリフライト）の対象外で、`application/json` は対象になる（https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header）。
+  - 2026-10-14、GitHub Pages の画面から `text/plain` で送る方式が実機で動作することを確認した。`application/json` で送った場合の挙動は試していない。
+  - GAS の応答はリダイレクト（302）を経由する。ブラウザ（Chromium で確認）はリダイレクトの応答にも CORS の許可を求めるため、GAS 側の仕様が変わると失敗しうる。
 - レスポンスは `ContentService` でJSONを返す。エラー時も `{ ok: false, error: "..." }` の形で返す。
 - 割り当て上限（一般アカウント）の目安：URL Fetchは1日20,000回。
 
