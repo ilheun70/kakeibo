@@ -22,7 +22,8 @@ Google Apps Script Webアプリ（gas/）
 
 - フロントエンド：素のHTML / CSS / JavaScript（ESモジュール）。ビルド工程やフレームワークは使わず、`/docs` をそのまま公開する。
 - バックエンド：Google Apps Script（GAS）。claspでローカルの `gas/` と同期する。
-- 秘密情報（`GEMINI_API_KEY`、`APP_TOKEN`、`GEMINI_MODEL`）は、GASのスクリプトプロパティにのみ保存する。
+- 秘密情報（`GEMINI_API_KEY`、`APP_TOKEN`、`GEMINI_MODEL`、`SPREADSHEET_ID`）は、GASのスクリプトプロパティにのみ保存する。
+  - `SPREADSHEET_ID` が必要なのは、Webアプリとして実行中は `SpreadsheetApp.getActiveSpreadsheet()` が使えず、`openById()` で開くため（https://developers.google.com/apps-script/guides/bound）。
 - 認証：GASはWebアプリとして「自分として実行／全員アクセス可」で公開する。そのため、すべてのリクエストで `APP_TOKEN` を照合する。トークンは各端末で初回に手入力し、localStorageに保存する。
 
 ## ディレクトリ構成
@@ -86,7 +87,7 @@ Google Apps Script Webアプリ（gas/）
 
 - [ ] Phase 0：レシート読み取り精度の検証（コードは書かない）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
-- [ ] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
+- [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [ ] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
 - [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
