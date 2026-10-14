@@ -87,7 +87,7 @@ Google Apps Script Webアプリ（gas/）
 
 - [ ] Phase 0：レシート読み取り精度の検証（コードは書かない）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
-- [ ] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
+- [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [ ] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
 - [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
