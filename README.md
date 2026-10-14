@@ -65,23 +65,43 @@ Google Apps Script Webアプリ（gas/）
 
 ### 3. clasp でコードを反映する（PCで実施）
 
+この手順は、すべて **PCに clone したフォルダ** で行います。
+
+> **注意**：`.clasp.json` を GitHub の Web画面で作ったり、アップロードしたりしないでください。
+> `.gitignore` が働くのは、PC上で `git add` するときだけです。Web画面から作ったファイルは、
+> そのまま public リポジトリにコミットされます。
+
 clasp は Node.js 22 以上が必要です。
 
-1. https://script.google.com/home/usersettings で Google Apps Script API を有効にする
-2. clasp をインストールしてログインする
+1. リポジトリを PC に clone し、そのフォルダに移動する
+
+   ```sh
+   git clone https://github.com/ilheun70/kakeibo.git
+   cd kakeibo
+   ```
+
+2. https://script.google.com/home/usersettings で Google Apps Script API を有効にする
+3. clasp をインストールしてログインする
 
    ```sh
    npm install -g @google/clasp
    clasp login
    ```
 
-3. リポジトリ直下に `.clasp.json` を作る（`.gitignore` で除外済み。コミットしない）
+4. clone したフォルダの直下（`README.md` と同じ場所）に、エディタで `.clasp.json` を作る
 
    ```json
    { "scriptId": "<スクリプトID>", "rootDir": "gas" }
    ```
 
-4. リポジトリ直下で反映する。リモートのプロジェクトは丸ごと `gas/` の内容に置き換わります
+5. `.clasp.json` が Git の管理対象外になっていることを確認する
+
+   ```sh
+   git check-ignore -v .clasp.json   # 「.gitignore:2:.clasp.json」のように表示されればOK
+   git status                        # 一覧に .clasp.json が出ないことを確認
+   ```
+
+6. 同じフォルダで反映する。リモートのプロジェクトは丸ごと `gas/` の内容に置き換わります
 
    ```sh
    clasp push
