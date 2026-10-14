@@ -73,35 +73,75 @@ Google Apps Script Webアプリ（gas/）
 
 clasp は Node.js 22 以上が必要です。
 
-1. リポジトリを PC に clone し、そのフォルダに移動する
+Windows では、PowerShell を **通常の方法で** 開いてください（「管理者として実行」は使いません）。
+管理者として開くと、最初の場所が `C:\Windows\System32` になる場合があります。そこで clone すると、
+システムフォルダの中にリポジトリができてしまいます。
+
+1. ホームフォルダに clone し、そのフォルダに移動する
 
    ```sh
+   cd ~                # Windows の PowerShell では cd $HOME
    git clone https://github.com/ilheun70/kakeibo.git
    cd kakeibo
    ```
 
-2. https://script.google.com/home/usersettings で Google Apps Script API を有効にする
-3. clasp をインストールしてログインする
+2. `gas/` があることを確認する
+
+   ```sh
+   ls                  # README.md と gas が表示されればOK
+   ```
+
+   `gas/` が表示されない場合、clone した `main` に GAS のコードがまだマージされていません。
+   作業中のブランチに切り替えてください（ブランチ名は、対応するプルリクエストの画面で確認します）。
+
+   ```sh
+   git switch <ブランチ名>
+   ```
+
+   GitHub 側にだけある同名のブランチも、このコマンドで取得と切り替えが一度にできます。
+   プルリクエストがマージされたあとは、`git switch main` と `git pull` で `main` に戻します。
+
+3. https://script.google.com/home/usersettings で Google Apps Script API を有効にする
+4. clasp をインストールしてログインする
 
    ```sh
    npm install -g @google/clasp
    clasp login
    ```
 
-4. clone したフォルダの直下（`README.md` と同じ場所）に、エディタで `.clasp.json` を作る
+5. clone したフォルダの直下（`README.md` と同じ場所。`gas/` の中ではない）に、コマンドで `.clasp.json` を作る。
+   `ここにID` は、「2. GASプロジェクトを作る」で控えたスクリプトIDに置き換えます（URL全体ではなくIDだけ。前後の `'` は残す）
 
-   ```json
-   { "scriptId": "<スクリプトID>", "rootDir": "gas" }
-   ```
-
-5. `.clasp.json` が Git の管理対象外になっていることを確認する
+   Mac / Linux / Git Bash:
 
    ```sh
-   git check-ignore -v .clasp.json   # 「.gitignore:2:.clasp.json」のように表示されればOK
-   git status                        # 一覧に .clasp.json が出ないことを確認
+   printf '{ "scriptId": "%s", "rootDir": "gas" }\n' 'ここにID' > .clasp.json
    ```
 
-6. 同じフォルダで反映する。リモートのプロジェクトは丸ごと `gas/` の内容に置き換わります
+   Windows PowerShell:
+
+   ```powershell
+   Set-Content -Path .clasp.json -Value '{ "scriptId": "ここにID", "rootDir": "gas" }' -Encoding ascii
+   ```
+
+   メモ帳などのエディタで作ると、設定によっては `.txt` が付いたり、`"` が `“ ”` に変換されたりします。
+   そのため、コマンドで作ることを勧めます。
+
+6. `.clasp.json` を確認する
+
+   ```sh
+   cat .clasp.json                   # Windows は Get-Content .clasp.json。IDと gas が入っていればOK
+   node -e "const c=JSON.parse(require('fs').readFileSync('.clasp.json','utf8')); console.log(c.scriptId, c.rootDir)"
+                                     # IDと gas が表示されればOK。エラーなら作り直す
+   git check-ignore -v .clasp.json   # 「.gitignore:2:.clasp.json」のように表示されればOK
+   git status                        # 一覧に .clasp.json が出ないことを確認
+   clasp show-file-status            # gas/ の4ファイル（appsscript.json と .js 3つ）が出ればOK
+   ```
+
+   `git check-ignore` で何も表示されない場合は、ファイル名か置き場所が間違っています。
+   `ls -a`（Windows は `ls -Force`）で確認してください。
+
+7. 同じフォルダで反映する。リモートのプロジェクトは丸ごと `gas/` の内容に置き換わります
 
    ```sh
    clasp push
