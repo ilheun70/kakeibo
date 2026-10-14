@@ -29,7 +29,7 @@ Google Apps Script Webアプリ（gas/）
 └─ gas/        # Apps Script（clasp の rootDir）
 ```
 
-`docs/` は Phase 3 以降で作成します。
+`docs/` は GitHub Pages で公開する画面、`gas/` は GAS のコードです。
 
 ## 注意事項
 
@@ -207,6 +207,24 @@ curl -sSL "$GAS_URL"
 
 `memo` に `=1+1` を入れた行は、シート上で数式として計算されず、`=1+1` という文字列のまま表示されることを確認してください。
 
+### 7. 画面を GitHub Pages で公開する
+
+1. GitHub のリポジトリで **Settings > Pages** を開く
+2. 「Build and deployment」の「Source」で **Deploy from a branch** を選ぶ
+3. ブランチに `main`、フォルダに `/docs` を選んで **Save** を押す
+   （未マージの変更を実機で確かめるときは、一時的にそのブランチを選ぶ）
+4. しばらくすると `https://ilheun70.github.io/kakeibo/` で開けるようになる
+
+公開されるのは画面のファイルだけです。GAS の URL と合言葉は各端末で入力し、その端末にだけ保存されます。
+
+### 8. iPhone / iPad で使う
+
+1. Safari で上記の URL を開き、共有メニューから **ホーム画面に追加** する
+2. **ホーム画面のアイコンから開いて**、「設定」で GAS の URL と合言葉を入力し、「接続テスト」→「保存」の順に押す
+   - ホーム画面から開いたアプリと Safari は保存先が別です。Safari で設定しても、ホーム画面のアプリには引き継がれません
+3. 「入力」で保存し、スプレッドシートに1行追加されることを確認する
+4. 「カメラ確認」で、撮影と写真の選択ができることを確認する（画像は送信されません）
+
 ## API
 
 `doPost` に、JSON文字列を `Content-Type: text/plain` で送ります。
@@ -228,7 +246,7 @@ curl -sSL "$GAS_URL"
 - [ ] Phase 0：レシート読み取り精度の検証
 - [x] Phase 1：リポジトリ初期化
 - [x] Phase 2：スプレッドシートとGASの土台
-- [ ] Phase 3：手動入力でフロント→GAS→シートを一周させる
+- [x] Phase 3：手動入力でフロント→GAS→シートを一周させる
 - [ ] Phase 4：レシート読み取り
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
 
