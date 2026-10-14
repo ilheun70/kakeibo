@@ -26,7 +26,8 @@ Google Apps Script Webアプリ（gas/）
 ├─ CLAUDE.md   # 開発方針・制約（Claude Code 向け）
 ├─ README.md
 ├─ docs/       # GitHub Pagesで公開されるフロントエンド
-└─ gas/        # Apps Script（clasp の rootDir）
+├─ gas/        # Apps Script（clasp の rootDir）
+└─ notes/      # 検証の手順と結果のまとめ（個人の家計データは置かない）
 ```
 
 `docs/` は GitHub Pages で公開する画面、`gas/` は GAS のコードです。
