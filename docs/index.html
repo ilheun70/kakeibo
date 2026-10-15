@@ -19,12 +19,23 @@
   <nav class="tabs" aria-label="画面の切り替え">
     <button type="button" class="tab" data-view="entry">入力</button>
     <button type="button" class="tab" data-view="settings">設定</button>
-    <button type="button" class="tab" data-view="camera">カメラ確認</button>
   </nav>
 
   <main>
-    <!-- 入力（Phase 4 のレシート確認画面と共通） -->
+    <!-- 入力（レシートの読み取り結果の確認・修正と共通） -->
     <section id="view-entry" class="view" hidden>
+      <label class="file-button">
+        <input id="receipt-input" type="file" accept="image/*">
+        <span>レシートを読み取る</span>
+      </label>
+      <div id="receipt-result" class="notice receipt-result" hidden>
+        <p id="receipt-result-text"></p>
+        <details id="receipt-items-box">
+          <summary>読み取った明細（参考。保存はされません）</summary>
+          <ul id="receipt-items" class="receipt-items"></ul>
+        </details>
+        <button type="button" id="receipt-discard">読み取り結果を取り消す</button>
+      </div>
       <form id="entry-form" novalidate autocomplete="off">
         <div class="field">
           <label for="entry-date">日付</label>
@@ -85,15 +96,26 @@
       </p>
     </section>
 
-    <!-- カメラ確認（画像は送信しない） -->
-    <section id="view-camera" class="view" hidden>
-      <p>撮影または写真の選択ができるかを確認する画面です。選んだ画像はこの端末に表示するだけで、どこにも送信しません。</p>
-      <label class="file-button">
-        <input id="camera-input" type="file" accept="image/*">
-        <span>撮影する／写真を選ぶ</span>
-      </label>
-      <p class="status" id="camera-status" role="status" aria-live="polite"></p>
-      <img id="camera-preview" class="preview" alt="選んだ画像のプレビュー" hidden>
+    <!-- レシートの個人情報を塗りつぶしてから読み取る -->
+    <section id="view-receipt" class="view" hidden>
+      <p>
+        カード番号・会員番号・氏名・電話番号・バーコードなど、送りたくない部分を指でなぞって囲むと、黒く塗りつぶします。
+        少し広めに囲んでください。
+      </p>
+      <canvas id="receipt-canvas" class="mask-canvas" aria-label="レシートの画像。なぞった部分を塗りつぶします"></canvas>
+      <div class="button-row">
+        <button type="button" id="receipt-undo">1つ戻す</button>
+        <button type="button" id="receipt-clear">全部消す</button>
+      </div>
+      <div class="button-row">
+        <button type="button" id="receipt-cancel">やめる</button>
+        <button type="button" id="receipt-send" class="primary">読み取る</button>
+      </div>
+      <p class="status" id="receipt-status" role="status" aria-live="polite"></p>
+      <p class="hint">
+        塗りつぶした画像を縮小して、Google の Gemini API（無料枠）に送ります。元の写真は送りません。
+        無料枠に送った内容は Google の製品改善に使われ、人が確認する場合があります。
+      </p>
     </section>
   </main>
 </body>

@@ -47,17 +47,23 @@ function listTransactions(data) {
 }
 
 function requireDate(value) {
-  const m = typeof value === 'string' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (m) {
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    const dt = new Date(Date.UTC(y, mo - 1, d));
-    if (dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d) {
-      return value;
-    }
+  if (isValidDate(value)) {
+    return value;
   }
   throw new ClientError('date は実在する日付を YYYY-MM-DD 形式で指定してください');
+}
+
+/** 実在する日付を YYYY-MM-DD 形式で表した文字列なら true。 */
+function isValidDate(value) {
+  const m = typeof value === 'string' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) {
+    return false;
+  }
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
 }
 
 function requireAmount(value) {

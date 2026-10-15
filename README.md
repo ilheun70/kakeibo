@@ -63,8 +63,21 @@ Google Apps Script Webアプリ（gas/）
      |---|---|
      | `APP_TOKEN` | 英数字だけの長いランダムな文字列（各端末で入力する合言葉） |
      | `SPREADSHEET_ID` | 手順1で控えたID |
+     | `GEMINI_API_KEY` | 手順3で作る Gemini の API キー |
+     | `GEMINI_MODEL` | `gemini-3.5-flash-lite`（読み取りの失敗が増えたら `gemini-3.8-flash`） |
 
-### 3. clasp でコードを反映する（PCで実施）
+### 3. Gemini の API キーを作る（レシート読み取り用）
+
+手順は公式ドキュメント（https://ai.google.dev/gemini-api/docs/api-key ）に沿っています。画面の項目名は変わることがあります。
+
+1. https://aistudio.google.com/apikey を開き、**Create API key** でキーを作る
+2. 一覧で **Unrestricted** と表示されたキーにカーソルを合わせ、**Add restrictions** → **Restrict to Gemini API only** → **Restrict key** の順に押す
+3. 作ったキーを、手順2のスクリプトプロパティ `GEMINI_API_KEY` に登録する
+
+**キーを作ったプロジェクトに、請求先アカウント（課金）を設定しないでください。** 設定しなければ無料枠だけで動きます。
+無料枠では、送った画像が Google の製品改善に使われ、人が確認する場合があります。そのため、アプリでは個人情報の部分を塗りつぶしてから送ります。
+
+### 4. clasp でコードを反映する（PCで実施）
 
 この手順は、すべて **PCに clone したフォルダ** で行います。
 
@@ -136,7 +149,7 @@ Windows では、PowerShell を **通常の方法で** 開いてください（�
                                      # IDと gas が表示されればOK。エラーなら作り直す
    git check-ignore -v .clasp.json   # 「.gitignore:2:.clasp.json」のように表示されればOK
    git status                        # 一覧に .clasp.json が出ないことを確認
-   clasp show-file-status            # gas/ の4ファイル（appsscript.json と .js 3つ）が出ればOK
+   clasp show-file-status            # gas/ の6ファイル（appsscript.json と .js 5つ）が出ればOK
    ```
 
    `git check-ignore` で何も表示されない場合は、ファイル名か置き場所が間違っています。
@@ -148,12 +161,14 @@ Windows では、PowerShell を **通常の方法で** 開いてください（�
    clasp push
    ```
 
-### 4. シートを初期化する
+### 5. シートを初期化する
 
 1. GASのエディタで `setupSheet` を選んで実行する（初回は権限の承認画面が出るので許可する）
 2. スプレッドシートに `transactions` シートと見出し行ができたことを確認する
+3. 同じく `checkGeminiSetup` を実行し、実行ログに `OK：モデル … を使えます` と出ることを確認する
+   （API キーとモデル名の確認だけで、画像は送りません）
 
-### 5. Webアプリとしてデプロイする
+### 6. Webアプリとしてデプロイする
 
 1. エディタの **Deploy > New deployment** で種類に **Web app** を選ぶ
 2. 実行するユーザーを「自分」、アクセスできるユーザーを「全員（ログインしていない人を含む）」にする
@@ -161,8 +176,9 @@ Windows では、PowerShell を **通常の方法で** 開いてください（�
 3. 発行された `/exec` で終わるURLを控える（コミットしない）
 
 コードを変更したあとは、`clasp push` のあと、デプロイの管理画面で既存のデプロイを新しいバージョンに更新します。URLは変わりません。
+`appsscript.json` の権限（`oauthScopes`）が増えたときは、デプロイを更新する前に、エディタで関数（`checkGeminiSetup` など）を1回実行して権限を承認し直します。
 
-### 6. 動作確認（curl）
+### 7. 動作確認（curl）
 
 bash で実行します。Windows では PowerShell ではなく **Git Bash** を使います（Git for Windows に curl が同梱されています）。
 
@@ -208,7 +224,7 @@ curl -sSL "$GAS_URL"
 
 `memo` に `=1+1` を入れた行は、シート上で数式として計算されず、`=1+1` という文字列のまま表示されることを確認してください。
 
-### 7. 画面を GitHub Pages で公開する
+### 8. 画面を GitHub Pages で公開する
 
 1. GitHub のリポジトリで **Settings > Pages** を開く
 2. 「Build and deployment」の「Source」で **Deploy from a branch** を選ぶ
@@ -218,20 +234,21 @@ curl -sSL "$GAS_URL"
 
 公開されるのは画面のファイルだけです。GAS の URL と合言葉は各端末で入力し、その端末にだけ保存されます。
 
-### 8. iPhone / iPad で使う
+### 9. iPhone / iPad で使う
 
 1. Safari で上記の URL を開き、共有メニューから **ホーム画面に追加** する
 2. **ホーム画面のアイコンから開いて**、「設定」で GAS の URL と合言葉を入力し、「接続テスト」→「保存」の順に押す
    - ホーム画面から開いたアプリと Safari は保存先が別です。Safari で設定しても、ホーム画面のアプリには引き継がれません
 3. 「入力」で保存し、スプレッドシートに1行追加されることを確認する
-4. 「カメラ確認」で、撮影と写真の選択ができることを確認する（画像は送信されません）
+4. 「入力」の「レシートを読み取る」で撮影するか写真を選び、カード番号などの部分を指でなぞって塗りつぶしてから「読み取る」を押す。
+   読み取った内容がフォームに入るので、確認・修正してから「保存」を押す
 
 ## API
 
 `doPost` に、JSON文字列を `Content-Type: text/plain` で送ります。
 
 ```json
-{ "token": "<APP_TOKEN>", "action": "ping | add | list", "data": { } }
+{ "token": "<APP_TOKEN>", "action": "ping | add | list | readReceipt", "data": { } }
 ```
 
 | action | data | 成功時のレスポンス |
@@ -239,6 +256,7 @@ curl -sSL "$GAS_URL"
 | `ping` | なし | `{ "ok": true, "message": "pong" }` |
 | `add` | `date`（YYYY-MM-DD、必須）、`amount`（整数、必須）、`source`（`manual` / `receipt`、必須）、`store`・`category`・`payment`・`memo`（文字列、省略可） | `{ "ok": true, "record": { ... } }` |
 | `list` | `month`（YYYY-MM、省略可） | `{ "ok": true, "records": [ ... ] }`（日付の新しい順） |
+| `readReceipt` | `image`（JPEG の base64。`data:` の接頭辞なし、必須） | `{ "ok": true, "receipt": { "date", "store", "amount", "category", "payment", "items": [{ "name", "price" }] } }`（読み取れなかった項目は `null`。シートには保存しない） |
 
 失敗時は `{ "ok": false, "error": "..." }` を返します。HTTPステータスでは成否を区別しません。
 

@@ -71,8 +71,11 @@ Google Apps Script Webアプリ（gas/）
   - 2.5 系（gemini-2.5-flash など）は、過去に使ったことのある利用者しか使えないよう制限されているため使わない（https://ai.google.dev/gemini-api/docs/models ）。
   - 無料枠の1日あたりの上限は公式ドキュメントに数値がなく、AI Studio の利用上限のページ（要ログイン）でのみ確認できる。数値は未確認。上限はプロジェクト単位で、1日の回数は太平洋時間の0時にリセットされる（https://ai.google.dev/gemini-api/docs/rate-limits ）。上限を超えたときは、利用者に分かるメッセージを表示する。
 - 規約上、無料枠に送った内容は製品改善に使われ、人間がレビューする場合がある。また、個人情報を送らないよう求められている。
-  - 送信前に画像を縮小し、カード番号・会員番号など個人情報を含む部分を送らない設計にする（トリミング等）。
-- 出力は構造化JSONで受け取る：`date`、`store`、`total`、`items[{name, price}]`、`payment`。
+  - 送信前に画像を縮小し、カード番号・会員番号など個人情報を含む部分を送らない設計にする。
+  - Phase 4 で、アプリ内で指でなぞった範囲を不透明の黒で塗りつぶす方式にした。送るのは canvas で作り直した JPEG（長い辺 2000px）だけで、元の写真ファイル（位置情報などを含みうる）は送らない。
+- 出力は構造化JSONで受け取る：`date`、`store`、`total`、`items[{name, price}]`、`payment`、`category`。
+  - `category` は Phase 4 で追加した（既存の10個から選ばせる）。明細（`items`）は確認画面に表示するだけで保存しない。
+  - 出力の形は `generationConfig.responseFormat` で指定する。`responseSchema` は非推奨になっている（https://ai.google.dev/api/generate-content 、2026-10-13 更新）。
 - 読み取り方式は、Phase 0 の検証結果（5枚・2モデルで合計・日付・店名とも全問正解）をもとに Gemini に決定した。
 
 ## スプレッドシート（シート名：`transactions`）
@@ -97,7 +100,7 @@ Google Apps Script Webアプリ（gas/）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
 - [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [x] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
-- [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）。計画は `notes/phase4-plan.md`（未承認の決定事項あり）
+- [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）。実装済み・実機での確認待ち（計画と決定事項は `notes/phase4-plan.md`）
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
 
 ## 作業ルール
