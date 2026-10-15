@@ -5,6 +5,8 @@
 import { loadSettings } from './settings.js';
 
 const TIMEOUT_MS = 30000;
+// レシートの読み取りは Gemini の応答待ちと、失敗時の1回のやり直しがあるため長めにする。
+const TIMEOUT_MS_BY_ACTION = { readReceipt: 60000 };
 
 /** サーバーが ok:false を返した、または通信に失敗したときのエラー。message は利用者向け。 */
 export class ApiError extends Error {}
@@ -20,7 +22,7 @@ export async function callApi(action, data = {}, settings = loadSettings()) {
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS_BY_ACTION[action] ?? TIMEOUT_MS);
   let res;
   try {
     res = await fetch(url, {

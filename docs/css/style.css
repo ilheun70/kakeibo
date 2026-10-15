@@ -207,6 +207,10 @@ button:disabled {
   font-weight: 600;
 }
 
+#view-entry .file-button {
+  margin-bottom: 16px;
+}
+
 .file-button input {
   position: absolute;
   width: 1px;
@@ -214,14 +218,45 @@ button:disabled {
   opacity: 0;
 }
 
-.preview {
-  display: block;
-  max-width: 100%;
-  max-height: 60vh;
-  margin: 12px auto 0;
-  border-radius: 8px;
+.receipt-result {
+  margin-bottom: 16px;
 }
 
-.preview[hidden] {
-  display: none;
+.receipt-result p {
+  margin: 0 0 8px;
+}
+
+.receipt-result details {
+  margin-bottom: 8px;
+}
+
+.receipt-items {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+  font-size: 0.9rem;
+}
+
+.receipt-items .price {
+  margin-left: 0.5em;
+  color: var(--muted);
+}
+
+/* 画面に収まる大きさで表示する（canvas 自体の画素数は縮小後の画像と同じ） */
+.mask-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  margin: 12px auto;
+  border: 1px solid var(--border);
+  /* なぞる操作でページがスクロールしないようにする */
+  touch-action: none;
+}
+
+.mask-canvas.busy {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.button-row + .button-row {
+  margin-top: 12px;
 }

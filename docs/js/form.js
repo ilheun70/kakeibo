@@ -86,7 +86,7 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
     return Object.assign(values, { amount: Number(values.amount) });
   }
 
-  /** 値を流し込む（Phase 4 で読み取り結果を表示するときに使う）。 */
+  /** 値を流し込む（レシートの読み取り結果を表示するときに使う）。null と undefined の項目は変えない。 */
   function setValues(values) {
     ['date', 'amount', 'store', 'category', 'payment', 'memo'].forEach((name) => {
       if (values[name] !== undefined && values[name] !== null) {
