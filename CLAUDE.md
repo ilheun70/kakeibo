@@ -97,7 +97,7 @@ Google Apps Script Webアプリ（gas/）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
 - [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [x] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
-- [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）
+- [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）。計画は `notes/phase4-plan.md`（未承認の決定事項あり）
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
 
 ## 作業ルール
