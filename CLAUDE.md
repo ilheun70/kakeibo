@@ -66,11 +66,14 @@ Google Apps Script Webアプリ（gas/）
 ## Gemini API（レシート読み取り）
 
 - 無料枠（課金アカウントを紐づけないプロジェクト）のみを使う。モデル名はハードコードせず、スクリプトプロパティの `GEMINI_MODEL` から読む。
-  - 2026年10月時点で無料枠の対象：Flash系・Flash-Lite系（例：gemini-3.5-flash-lite、gemini-3.1-flash-lite、gemini-2.5-flash）。採用する前に公式の料金ページで現状を確認すること。
+  - Phase 0 の結果、`gemini-3.5-flash-lite` を採用する。読み取りの失敗が増えたら `gemini-3.8-flash` に切り替える（詳細は `notes/phase0.md`）。
+  - 2026-10-14 時点で、どちらも無料枠の対象（https://ai.google.dev/gemini-api/docs/pricing ）。モデルを変える前に、公式の料金ページで現状を確認すること。
+  - 2.5 系（gemini-2.5-flash など）は、過去に使ったことのある利用者しか使えないよう制限されているため使わない（https://ai.google.dev/gemini-api/docs/models ）。
+  - 無料枠の1日あたりの上限は公式ドキュメントに数値がなく、AI Studio の利用上限のページ（要ログイン）でのみ確認できる。数値は未確認。上限はプロジェクト単位で、1日の回数は太平洋時間の0時にリセットされる（https://ai.google.dev/gemini-api/docs/rate-limits ）。上限を超えたときは、利用者に分かるメッセージを表示する。
 - 規約上、無料枠に送った内容は製品改善に使われ、人間がレビューする場合がある。また、個人情報を送らないよう求められている。
   - 送信前に画像を縮小し、カード番号・会員番号など個人情報を含む部分を送らない設計にする（トリミング等）。
 - 出力は構造化JSONで受け取る：`date`、`store`、`total`、`items[{name, price}]`、`payment`。
-- 読み取り方式（Gemini か 端末内OCR か）は Phase 0 の検証結果で最終決定する。
+- 読み取り方式は、Phase 0 の検証結果（5枚・2モデルで合計・日付・店名とも全問正解）をもとに Gemini に決定した。
 
 ## スプレッドシート（シート名：`transactions`）
 
@@ -90,7 +93,7 @@ Google Apps Script Webアプリ（gas/）
 
 ## 開発フェーズ
 
-- [ ] Phase 0：レシート読み取り精度の検証（コードは書かない）
+- [x] Phase 0：レシート読み取り精度の検証（コードは書かない）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
 - [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [x] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
