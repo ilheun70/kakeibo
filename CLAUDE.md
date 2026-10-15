@@ -76,6 +76,7 @@ Google Apps Script Webアプリ（gas/）
 - 出力は構造化JSONで受け取る：`date`、`store`、`total`、`items[{name, price}]`、`payment`、`category`。
   - `category` は Phase 4 で追加した（既存の10個から選ばせる）。明細（`items`）は確認画面に表示するだけで保存しない。
   - 出力の形は `generationConfig.responseFormat` で指定する。`responseSchema` は非推奨になっている（https://ai.google.dev/api/generate-content 、2026-10-13 更新）。
+  - 2026-10-15、実機で読み取りが動き、null を許す書き方（`type: ["string","null"]`、`anyOf`）のスキーマが受け付けられることを確認した。
 - 読み取り方式は、Phase 0 の検証結果（5枚・2モデルで合計・日付・店名とも全問正解）をもとに Gemini に決定した。
 
 ## スプレッドシート（シート名：`transactions`）
@@ -100,7 +101,7 @@ Google Apps Script Webアプリ（gas/）
 - [x] Phase 1：リポジトリ初期化（本ファイル、README、.gitignore）
 - [x] Phase 2：スプレッドシートとGASの土台（doGet / doPost、トークン認証）
 - [x] Phase 3：手動入力でフロント→GAS→シートを一周させる。ホーム画面からのカメラ動作もここで実機確認する
-- [ ] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）。実装済み・実機での確認待ち（計画と決定事項は `notes/phase4-plan.md`）
+- [x] Phase 4：レシート読み取り（縮小→Gemini→確認画面→保存）。2026-10-15 に iPhone で確認（計画・決定事項・確認結果は `notes/phase4-plan.md`）
 - [ ] Phase 5：一覧・月次集計画面、仕上げ
 
 ## 作業ルール
