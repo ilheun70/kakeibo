@@ -244,13 +244,14 @@ curl -sSL "$GAS_URL"
 3. 「入力」で保存し、スプレッドシートに1行追加されることを確認する
 4. 「入力」の「レシートを読み取る」で撮影するか写真を選び、カード番号などの部分を指でなぞって塗りつぶしてから「読み取る」を押す。
    読み取った内容がフォームに入るので、確認・修正してから「保存」を押す
+5. 「月別」で、月ごとの合計、カテゴリ別・支払方法別の合計、一覧を見る。一覧の行を押すと、その記録を修正・削除できる
 
 ## API
 
 `doPost` に、JSON文字列を `Content-Type: text/plain` で送ります。
 
 ```json
-{ "token": "<APP_TOKEN>", "action": "ping | add | list | readReceipt", "data": { } }
+{ "token": "<APP_TOKEN>", "action": "ping | add | list | update | delete | readReceipt", "data": { } }
 ```
 
 | action | data | 成功時のレスポンス |
@@ -258,6 +259,8 @@ curl -sSL "$GAS_URL"
 | `ping` | なし | `{ "ok": true, "message": "pong" }` |
 | `add` | `date`（YYYY-MM-DD、必須）、`amount`（整数、必須）、`source`（`manual` / `receipt`、必須）、`store`・`category`・`payment`・`memo`（文字列、省略可） | `{ "ok": true, "record": { ... } }` |
 | `list` | `month`（YYYY-MM、省略可） | `{ "ok": true, "records": [ ... ] }`（日付の新しい順） |
+| `update` | `id`（必須）、ほかは `add` と同じ（`source` を除く） | `{ "ok": true, "record": { ... } }`（id・source・created_at は変わらない） |
+| `delete` | `id`（必須） | `{ "ok": true, "deleted": "<id>" }` |
 | `readReceipt` | `image`（JPEG の base64。`data:` の接頭辞なし、必須） | `{ "ok": true, "receipt": { "date", "store", "amount", "category", "payment", "items": [{ "name", "price" }] } }`（読み取れなかった項目は `null`。シートには保存しない） |
 
 失敗時は `{ "ok": false, "error": "..." }` を返します。HTTPステータスでは成否を区別しません。
