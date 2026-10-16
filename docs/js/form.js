@@ -40,6 +40,7 @@ function fillSelect(select, values) {
 /**
  * フォームを初期化して操作用のオブジェクトを返す。
  * onSubmit(values) は保存処理を行う async 関数。例外を投げると入力内容を残したままエラーを表示する。
+ * 戻り値の文字列は保存後に表示する。null を返した場合は、フォームの後始末を呼び出し側が行う。
  */
 export function createEntryForm(form, { onSubmit, statusEl }) {
   const fields = form.elements;
@@ -89,15 +90,25 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
   /** 値を流し込む（レシートの読み取り結果を表示するときに使う）。null と undefined の項目は変えない。 */
   function setValues(values) {
     ['date', 'amount', 'store', 'category', 'payment', 'memo'].forEach((name) => {
-      if (values[name] !== undefined && values[name] !== null) {
-        fields[name].value = String(values[name]);
+      if (values[name] === undefined || values[name] === null) return;
+      const value = String(values[name]);
+      const field = fields[name];
+      // 選択肢にない値（選択肢を変える前に保存した値など）は、消えないよう選択肢に足す。
+      if (field.tagName === 'SELECT' && value !== '' && ![...field.options].some((o) => o.value === value)) {
+        const option = document.createElement('option');
+        option.dataset.extra = 'true';
+        option.value = value;
+        option.textContent = value;
+        field.append(option);
       }
+      field.value = value;
     });
   }
 
   /** 日付を残して入力欄を空にする。 */
   function clear() {
     const date = fields.date.value;
+    form.querySelectorAll('option[data-extra]').forEach((o) => o.remove());
     form.reset();
     fields.date.value = date || today();
     ['date', 'amount', 'store', 'memo'].forEach((name) => showFieldError(name, ''));
@@ -115,9 +126,11 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
     setStatus('保存しています…', 'busy');
     try {
       const message = await onSubmit(values);
-      clear();
-      setStatus(message, 'success');
-      fields.amount.focus();
+      if (message !== null) {
+        clear();
+        setStatus(message, 'success');
+        fields.amount.focus();
+      }
     } catch (err) {
       setStatus(err.message, 'error');
     } finally {

@@ -2,12 +2,17 @@
 
 import { ApiError, callApi } from './api.js';
 import { createEntryForm, today } from './form.js';
+import { createMonthlyView } from './monthly.js';
 import { createMaskEditor, loadImage } from './receipt.js';
 import { isConfigured, loadSettings, sanitize, saveSettings, validateSettings } from './settings.js';
 
 const yen = new Intl.NumberFormat('ja-JP');
 
+// 画面を切り替える直前に呼ばれる（init で設定する）。
+let beforeShowView = () => {};
+
 function showView(name) {
+  beforeShowView(name);
   document.querySelectorAll('.view').forEach((view) => {
     view.hidden = view.id !== `view-${name}`;
   });
@@ -29,9 +34,24 @@ const RECEIPT_FIELD_LABELS = {
   payment: '支払方法',
 };
 
-/** 入力画面。レシートの読み取り結果も、このフォームで確認・修正してから保存する。 */
-function setupEntry() {
+function describeRecord(record) {
+  const store = record.store ? ` ${record.store}` : '';
+  return `${record.date}${store} ${yen.format(record.amount)}円`;
+}
+
+/**
+ * 入力画面。レシートの読み取り結果の確認と、月別の画面から選んだ記録の修正にも使う。
+ * onEditEnd(message) は修正・削除・修正のとりやめのあとに呼ばれる（とりやめは message が null）。
+ */
+function setupEntry({ onEditEnd }) {
   const form = document.getElementById('entry-form');
+  const submitButton = form.querySelector('button[type="submit"]');
+  const receiptButton = document.getElementById('receipt-button');
+  const editBanner = document.getElementById('edit-banner');
+  const deleteButton = document.getElementById('edit-delete');
+  const DELETE_LABEL = deleteButton.textContent;
+  let editing = null; // 修正中の記録
+  let deleteTimer = null;
   const result = document.getElementById('receipt-result');
   const resultText = document.getElementById('receipt-result-text');
   const itemsBox = document.getElementById('receipt-items-box');
@@ -47,11 +67,66 @@ function setupEntry() {
   const entry = createEntryForm(form, {
     statusEl: document.getElementById('entry-status'),
     async onSubmit(values) {
+      if (editing) {
+        const { record } = await callApi('update', Object.assign({ id: editing.id }, values));
+        endEdit();
+        onEditEnd(`修正しました：${describeRecord(record)}`);
+        return null;
+      }
       const { record } = await callApi('add', Object.assign({ source }, values));
       endReceipt();
-      const store = record.store ? ` ${record.store}` : '';
-      return `保存しました：${record.date}${store} ${yen.format(record.amount)}円`;
+      return `保存しました：${describeRecord(record)}`;
     },
+  });
+
+  /** 削除ボタンを、1回目の押下前の状態に戻す。 */
+  function disarmDelete() {
+    clearTimeout(deleteTimer);
+    deleteTimer = null;
+    deleteButton.textContent = DELETE_LABEL;
+    deleteButton.classList.remove('armed');
+  }
+
+  function endEdit() {
+    editing = null;
+    disarmDelete();
+    editBanner.hidden = true;
+    receiptButton.hidden = false;
+    submitButton.textContent = '保存';
+    entry.clear();
+    form.elements.date.value = today();
+    entry.setStatus('', '');
+  }
+
+  document.getElementById('edit-cancel').addEventListener('click', () => {
+    endEdit();
+    onEditEnd(null);
+  });
+
+  // 誤って消さないよう、2回押したときだけ削除する（confirm() は使わない）。
+  deleteButton.addEventListener('click', async () => {
+    if (!editing) return;
+    if (!deleteTimer) {
+      deleteButton.textContent = 'もう一度押すと削除します';
+      deleteButton.classList.add('armed');
+      deleteTimer = setTimeout(disarmDelete, 4000);
+      return;
+    }
+    disarmDelete();
+    const target = editing;
+    deleteButton.disabled = true;
+    submitButton.disabled = true;
+    entry.setStatus('削除しています…', 'busy');
+    try {
+      await callApi('delete', { id: target.id });
+      endEdit();
+      onEditEnd(`削除しました：${describeRecord(target)}`);
+    } catch (err) {
+      entry.setStatus(err instanceof ApiError ? err.message : '削除に失敗しました', 'error');
+    } finally {
+      deleteButton.disabled = false;
+      submitButton.disabled = false;
+    }
   });
 
   document.getElementById('receipt-discard').addEventListener('click', () => {
@@ -63,6 +138,29 @@ function setupEntry() {
 
   return {
     setStatus: entry.setStatus,
+    /** 月別の画面で選んだ記録を、修正できる状態でフォームに入れる。 */
+    startEdit(record) {
+      endReceipt();
+      entry.clear();
+      entry.setValues({
+        date: record.date,
+        amount: record.amount,
+        store: record.store,
+        category: record.category,
+        payment: record.payment,
+        memo: record.memo,
+      });
+      editing = record;
+      disarmDelete();
+      editBanner.hidden = false;
+      receiptButton.hidden = true;
+      submitButton.textContent = '修正を保存';
+      entry.setStatus('', '');
+    },
+    /** 修正中なら、修正をとりやめる（ほかの画面に移るとき）。 */
+    cancelEdit() {
+      if (editing) endEdit();
+    },
     /** 読み取り結果をフォームに入れる。読めなかった項目は空欄（選択肢は既定のまま）にする。 */
     showReceipt(receipt) {
       entry.clear();
@@ -237,7 +335,24 @@ function init() {
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => showView(tab.dataset.view));
   });
-  const entry = setupEntry();
+  let monthly = null;
+  const entry = setupEntry({
+    onEditEnd(message) {
+      showView('monthly');
+      if (message) monthly.load(message);
+    },
+  });
+  monthly = createMonthlyView({
+    onSelect(record) {
+      showView('entry');
+      entry.startEdit(record);
+      window.scrollTo(0, 0);
+    },
+  });
+  beforeShowView = (name) => {
+    if (name !== 'entry') entry.cancelEdit();
+  };
+  document.querySelector('.tab[data-view="monthly"]').addEventListener('click', () => monthly.load());
   setupReceipt(entry);
   setupSettings();
 
