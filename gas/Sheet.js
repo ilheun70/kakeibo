@@ -67,12 +67,17 @@ function checkHeader(sheet) {
 
 /** 1行追記する。record は COLUMNS のキーを持つオブジェクト。 */
 function appendRecord(record) {
-  const row = COLUMNS.map((name) => toCellValue(record[name]));
+  appendRecords([record]);
+}
+
+/** 複数行を、1回のロックの中で続けて追記する。 */
+function appendRecords(records) {
+  const rows = records.map((record) => COLUMNS.map((name) => toCellValue(record[name])));
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const sheet = getTransactionsSheet();
-    sheet.appendRow(row);
+    rows.forEach((row) => sheet.appendRow(row));
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();

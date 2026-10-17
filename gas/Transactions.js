@@ -1,11 +1,12 @@
 /**
- * action "add" / "list" / "update" / "delete" の処理と入力チェック。
+ * action "add" / "addMany" / "list" / "update" / "delete" の処理と入力チェック。
  */
 
 const SOURCES = ['manual', 'receipt'];
 const MAX_TEXT_LENGTH = 200;
 const MAX_MEMO_LENGTH = 1000;
 const MAX_ABS_AMOUNT = 100000000;
+const MAX_SPLITS = 10;
 const NOT_FOUND_MESSAGE = '指定された記録が見つかりません（ほかの端末で削除された可能性があります）';
 
 /**
@@ -19,6 +20,37 @@ function addTransaction(data) {
   });
   appendRecord(record);
   return record;
+}
+
+/**
+ * 1回の支払いをカテゴリごとの行に分けて、まとめて追加する。
+ * 日付・店名・支払方法・メモ・source と登録日時（created_at）は全行で同じにする。
+ * data: { date, store, payment, memo, source, splits: [{ category, amount }] }（splits は2〜10件）
+ */
+function addManyTransactions(data) {
+  const splits = data.splits;
+  if (!Array.isArray(splits) || splits.length < 2 || splits.length > MAX_SPLITS) {
+    throw new ClientError('splits は2〜' + MAX_SPLITS + '件で指定してください');
+  }
+  const common = {
+    date: requireDate(data.date),
+    store: optionalText(data.store, 'store', MAX_TEXT_LENGTH),
+    payment: optionalText(data.payment, 'payment', MAX_TEXT_LENGTH),
+    memo: optionalText(data.memo, 'memo', MAX_MEMO_LENGTH),
+    source: requireSource(data.source),
+    created_at: new Date().toISOString(),
+  };
+  const records = splits.map((split) => {
+    if (!split || typeof split !== 'object') {
+      throw new ClientError('splits の形式が不正です');
+    }
+    return Object.assign({ id: Utilities.getUuid() }, common, {
+      category: optionalText(split.category, 'category', MAX_TEXT_LENGTH),
+      amount: requireAmount(split.amount),
+    });
+  });
+  appendRecords(records);
+  return records;
 }
 
 /** 追加と修正で共通の項目（date〜memo）を検査して返す。 */
