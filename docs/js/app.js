@@ -4,6 +4,7 @@ import { ApiError, callApi } from './api.js';
 import { createEntryForm, today } from './form.js';
 import { createMonthlyView } from './monthly.js';
 import { createMaskEditor, loadImage } from './receipt.js';
+import { allocateSplits } from './split.js';
 import { isConfigured, loadSettings, sanitize, saveSettings, validateSettings } from './settings.js';
 
 const yen = new Intl.NumberFormat('ja-JP');
@@ -73,6 +74,12 @@ function setupEntry({ onEditEnd }) {
         onEditEnd(`修正しました：${describeRecord(record)}`);
         return null;
       }
+      if (values.splits) {
+        const { date, store, payment, memo, splits } = values;
+        const { records } = await callApi('addMany', { date, store, payment, memo, source, splits });
+        endReceipt();
+        return `保存しました：${describeRecord(values)}（${records.length}行に分けて保存）`;
+      }
       const { record } = await callApi('add', Object.assign({ source }, values));
       endReceipt();
       return `保存しました：${describeRecord(record)}`;
@@ -93,6 +100,7 @@ function setupEntry({ onEditEnd }) {
     editBanner.hidden = true;
     receiptButton.hidden = false;
     submitButton.textContent = '保存';
+    entry.setSplitAllowed(true);
     entry.clear();
     form.elements.date.value = today();
     entry.setStatus('', '');
@@ -151,6 +159,7 @@ function setupEntry({ onEditEnd }) {
         memo: record.memo,
       });
       editing = record;
+      entry.setSplitAllowed(false);
       disarmDelete();
       editBanner.hidden = false;
       receiptButton.hidden = true;
@@ -172,12 +181,16 @@ function setupEntry({ onEditEnd }) {
         payment: receipt.payment,
       });
       source = 'receipt';
+      // 明細が複数のカテゴリにまたがるときは、カテゴリ別に分けた状態にする（金額は明細の比率で配分）。
+      const splits = allocateSplits(receipt.items, receipt.amount, receipt.category);
+      if (splits.length) entry.setValues({ splits });
 
       const missing = Object.keys(RECEIPT_FIELD_LABELS)
         .filter((name) => receipt[name] === null || receipt[name] === undefined)
         .map((name) => RECEIPT_FIELD_LABELS[name]);
       resultText.textContent =
         'レシートから読み取りました。内容を確認・修正してから保存してください。' +
+        (splits.length ? '明細のカテゴリが複数あったので、カテゴリ別に分けました（金額は明細の比率で配分しています）。' : '') +
         (missing.length ? `読み取れなかった項目：${missing.join('、')}` : '');
 
       const items = Array.isArray(receipt.items) ? receipt.items : [];
@@ -186,7 +199,7 @@ function setupEntry({ onEditEnd }) {
           const li = document.createElement('li');
           const price = document.createElement('span');
           price.className = 'price';
-          price.textContent = `${yen.format(item.price)}円`;
+          price.textContent = `${yen.format(item.price)}円${item.category ? `・${item.category}` : ''}`;
           li.append(item.name, price);
           return li;
         })

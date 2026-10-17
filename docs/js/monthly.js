@@ -38,6 +38,23 @@ export function groupByDate(records) {
   return groups;
 }
 
+/**
+ * 同じ日の記録のうち、登録日時と店名が同じで続いているものを1つにまとめる
+ * （カテゴリ別に分けて保存した行は、登録日時が同じになる）。
+ */
+export function clusterRecords(records) {
+  const clusters = [];
+  records.forEach((r) => {
+    const last = clusters[clusters.length - 1];
+    if (last && last[0].created_at === r.created_at && last[0].store === r.store) {
+      last.push(r);
+    } else {
+      clusters.push([r]);
+    }
+  });
+  return clusters;
+}
+
 function dayLabel(date) {
   const [y, m, d] = date.split('-').map(Number);
   return `${m}月${d}日（${weekdayFormat.format(new Date(y, m - 1, d))}）`;
@@ -96,6 +113,22 @@ export function createMonthlyView({ onSelect }) {
     status.dataset.kind = kind || '';
   }
 
+  /** 一覧の1行。inSplit は、分けた記録の中の行として表示するとき true（店名は見出しに出す）。 */
+  function recordButton(r, inSplit) {
+    const button = el('button', 'record');
+    button.type = 'button';
+    const main = el('span', 'record-main');
+    const title = inSplit ? r.category || '未分類' : r.store || r.category || '（店名なし）';
+    main.append(el('span', 'record-title', title));
+    const meta = [inSplit ? '' : r.category, r.payment, r.source === 'receipt' ? 'レシート' : '']
+      .filter(Boolean)
+      .join('・');
+    main.append(el('span', 'record-meta', meta));
+    button.append(main, el('span', 'record-amount', `${yen.format(r.amount)}円`));
+    button.addEventListener('click', () => onSelect(r));
+    return button;
+  }
+
   function render(records) {
     const total = records.reduce((sum, r) => sum + r.amount, 0);
     totalEl.textContent = `${yen.format(total)}円`;
@@ -112,17 +145,27 @@ export function createMonthlyView({ onSelect }) {
           const head = el('h4', 'day-head');
           head.append(el('span', '', dayLabel(group.date)), el('span', 'day-total', `${yen.format(group.total)}円`));
           const ul = el('ul', 'records');
-          group.records.forEach((r) => {
-            const button = el('button', 'record');
-            button.type = 'button';
-            const main = el('span', 'record-main');
-            main.append(el('span', 'record-title', r.store || r.category || '（店名なし）'));
-            const meta = [r.category, r.payment, r.source === 'receipt' ? 'レシート' : ''].filter(Boolean).join('・');
-            main.append(el('span', 'record-meta', meta));
-            button.append(main, el('span', 'record-amount', `${yen.format(r.amount)}円`));
-            button.addEventListener('click', () => onSelect(r));
+          clusterRecords(group.records).forEach((cluster) => {
             const li = el('li');
-            li.append(button);
+            if (cluster.length === 1) {
+              li.append(recordButton(cluster[0], false));
+            } else {
+              // カテゴリ別に分けて保存した行：店名と合計を見出しにし、行はカテゴリ名で並べる
+              li.className = 'split-group';
+              const head = el('div', 'split-head');
+              const total = cluster.reduce((s, r) => s + r.amount, 0);
+              head.append(
+                el('span', 'record-title', `${cluster[0].store || '（店名なし）'}（${cluster.length}つに分けた記録）`),
+                el('span', 'record-amount', `${yen.format(total)}円`)
+              );
+              const inner = el('ul', 'records');
+              cluster.forEach((r) => {
+                const item = el('li');
+                item.append(recordButton(r, true));
+                inner.append(item);
+              });
+              li.append(head, inner);
+            }
             ul.append(li);
           });
           section.append(head, ul);

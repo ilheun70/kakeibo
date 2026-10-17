@@ -2,7 +2,7 @@
  * Webアプリの入口。
  *
  * リクエスト（POST、本文はJSON文字列）:
- *   { "token": "...", "action": "ping" | "add" | "list" | "update" | "delete" | "readReceipt", "data": { ... } }
+ *   { "token": "...", "action": "ping" | "add" | "addMany" | "list" | "update" | "delete" | "readReceipt", "data": { ... } }
  * レスポンス:
  *   成功 { "ok": true, ... } / 失敗 { "ok": false, "error": "..." }
  *
@@ -13,6 +13,7 @@
 const ACTIONS = {
   ping: () => ({ message: 'pong' }),
   add: (data) => ({ record: addTransaction(data) }),
+  addMany: (data) => ({ records: addManyTransactions(data) }),
   list: (data) => ({ records: listTransactions(data) }),
   update: (data) => ({ record: updateTransaction(data) }),
   delete: (data) => ({ deleted: deleteTransaction(data) }),

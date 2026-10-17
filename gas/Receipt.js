@@ -30,7 +30,7 @@ const RECEIPT_PROMPT = [
   '- date: 支払日。YYYY-MM-DD 形式。和暦は西暦に直す。読めなければ null',
   '- store: 店名。支店名があれば含める。読めなければ null',
   '- total: レシートの「合計」欄の税込金額（円、整数）。お預かり・お釣りの金額ではない。読めなければ null',
-  '- items: 明細の配列。各要素は {"name": 商品名, "price": 金額（円、整数）}。値引きの行は price を負の数にする。読めなければ空の配列',
+  '- items: 明細の配列。各要素は {"name": 商品名, "price": 金額（円、整数）, "category": その商品のカテゴリ}。値引きの行は price を負の数にする。category は下の category と同じ選択肢から1つ選び、判断できなければ null。読めなければ空の配列',
   '- payment: 支払方法。次のどれか1つ：' + RECEIPT_PAYMENTS.join('、') + '。判断できなければ null',
   '- category: 支出のカテゴリ。次のどれか1つ：' +
     RECEIPT_CATEGORIES.join('、') +
@@ -50,8 +50,12 @@ const RECEIPT_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        properties: { name: { type: 'string' }, price: { type: 'integer' } },
-        required: ['name', 'price'],
+        properties: {
+          name: { type: 'string' },
+          price: { type: 'integer' },
+          category: { anyOf: [{ type: 'string', enum: RECEIPT_CATEGORIES }, { type: 'null' }] },
+        },
+        required: ['name', 'price', 'category'],
       },
     },
     payment: { anyOf: [{ type: 'string', enum: RECEIPT_PAYMENTS }, { type: 'null' }] },
@@ -62,7 +66,7 @@ const RECEIPT_SCHEMA = {
 
 /**
  * data: { image: JPEG の base64（data: URL の接頭辞なし） }
- * 戻り値: { date, store, amount, category, payment, items[{name, price}] }
+ * 戻り値: { date, store, amount, category, payment, items[{name, price, category}] }
  *   読み取れなかった項目は null（items は空の配列）。
  */
 function readReceipt(data) {
@@ -110,7 +114,7 @@ function textOrNull(value) {
   return text === '' ? null : text;
 }
 
-/** 明細は確認画面に参考として表示するだけで、保存しない。 */
+/** 明細は保存しない。確認画面での表示と、カテゴリ別に分けるときの金額の計算に使う。 */
 function normalizeItems(items) {
   if (!Array.isArray(items)) {
     return [];
@@ -120,6 +124,7 @@ function normalizeItems(items) {
     .map((item) => ({
       name: textOrNull(item.name),
       price: Number.isInteger(item.price) && Math.abs(item.price) <= MAX_ABS_AMOUNT ? item.price : null,
+      category: RECEIPT_CATEGORIES.indexOf(item.category) !== -1 ? item.category : null,
     }))
     .filter((item) => item.name !== null && item.price !== null)
     .slice(0, MAX_RECEIPT_ITEMS);

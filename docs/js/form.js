@@ -1,6 +1,7 @@
 // 入力・確認フォーム。手動入力と、Phase 4 のレシート読み取り結果の確認で共通に使う。
 
 import { CATEGORIES, PAYMENTS } from './options.js';
+import { createSplitEditor } from './split.js';
 
 const MAX_AMOUNT = 100000000;
 
@@ -47,6 +48,23 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
   fillSelect(fields.category, CATEGORIES);
   fillSelect(fields.payment, PAYMENTS);
   const submitButton = form.querySelector('button[type="submit"]');
+  const categoryField = document.getElementById('category-field');
+  let lastError = '';
+
+  // カテゴリ別に分けている間は、1つだけのカテゴリ欄は使わないので隠す。
+  const split = createSplitEditor({
+    normalize: normalizeAmount,
+    getTotal() {
+      const amount = normalizeAmount(fields.amount.value);
+      return /^\d+$/.test(amount) ? Number(amount) : NaN;
+    },
+    onChange() {
+      categoryField.hidden = split.isActive();
+    },
+  });
+  fields.amount.addEventListener('input', () => {
+    if (split.isActive()) split.update();
+  });
 
   function showFieldError(name, message) {
     const el = form.querySelector(`[data-error-for="${name}"]`);
@@ -59,8 +77,12 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
     statusEl.dataset.kind = kind || '';
   }
 
-  /** 入力値を検査し、正しければ送信用の値、誤りがあれば null を返す。 */
+  /**
+   * 入力値を検査し、正しければ送信用の値、誤りがあれば null を返す。
+   * カテゴリ別に分けているときは、値に splits（[{ category, amount }]）を含める。
+   */
   function readValues() {
+    lastError = '';
     const values = {
       date: fields.date.value,
       amount: normalizeAmount(fields.amount.value),
@@ -84,10 +106,22 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
       fields[firstError].focus();
       return null;
     }
-    return Object.assign(values, { amount: Number(values.amount) });
+    const result = Object.assign(values, { amount: Number(values.amount) });
+    if (split.isActive()) {
+      const checked = split.read(result.amount);
+      if (checked.error) {
+        lastError = checked.error;
+        return null;
+      }
+      result.splits = checked.splits;
+    }
+    return result;
   }
 
-  /** 値を流し込む（レシートの読み取り結果を表示するときに使う）。null と undefined の項目は変えない。 */
+  /**
+   * 値を流し込む（レシートの読み取り結果や、修正する記録を表示するときに使う）。null と undefined の項目は変えない。
+   * splits（2行以上）を渡すと、カテゴリ別に分けた状態にする。
+   */
   function setValues(values) {
     ['date', 'amount', 'store', 'category', 'payment', 'memo'].forEach((name) => {
       if (values[name] === undefined || values[name] === null) return;
@@ -103,6 +137,9 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
       }
       field.value = value;
     });
+    if (Array.isArray(values.splits) && values.splits.length >= 2) {
+      split.set(values.splits);
+    }
   }
 
   /** 日付を残して入力欄を空にする。 */
@@ -110,6 +147,7 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
     const date = fields.date.value;
     form.querySelectorAll('option[data-extra]').forEach((o) => o.remove());
     form.reset();
+    split.reset();
     fields.date.value = date || today();
     ['date', 'amount', 'store', 'memo'].forEach((name) => showFieldError(name, ''));
   }
@@ -119,7 +157,7 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
     if (submitButton.disabled) return;
     const values = readValues();
     if (!values) {
-      setStatus('入力内容を確認してください', 'error');
+      setStatus(lastError || '入力内容を確認してください', 'error');
       return;
     }
     submitButton.disabled = true;
@@ -139,5 +177,5 @@ export function createEntryForm(form, { onSubmit, statusEl }) {
   });
 
   fields.date.value = today();
-  return { setValues, clear, setStatus };
+  return { setValues, clear, setStatus, setSplitAllowed: split.setAllowed };
 }
