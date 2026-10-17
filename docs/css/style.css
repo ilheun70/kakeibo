@@ -127,6 +127,32 @@ textarea {
   color: var(--text);
 }
 
+/*
+ * 日付の欄（iOS Safari 向けの対処）
+ * - padding を付けた日付の欄は、iOS では width: 100% の計算がずれて枠からはみ出す
+ *   （WebKit の未解決の不具合：https://bugs.webkit.org/show_bug.cgi?id=301648 ）。
+ *   左右の padding をなくし、文字の位置は中の部品の余白で整える。
+ * - display: block にすると下に余分な余白が出るとの報告があるため、ブラウザ既定の display に戻す。
+ * - iOS は日付を中央に寄せるので、ほかの欄に合わせて左に寄せる。
+ */
+input[type="date"] {
+  display: revert;
+  padding: 0;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  margin: 0 10px;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0 0 0 10px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-right: 10px;
+}
+
 #entry-amount {
   font-size: 1.4rem;
   text-align: right;
