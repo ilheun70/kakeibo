@@ -29,6 +29,11 @@
   box-sizing: border-box;
 }
 
+/* display を指定した要素でも、hidden 属性を付けたら必ず隠す */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -259,4 +264,152 @@ button:disabled {
 
 .button-row + .button-row {
   margin-top: 12px;
+}
+
+button.danger {
+  color: var(--error);
+}
+
+button.danger.armed {
+  border-color: var(--error);
+  background: var(--error);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.edit-banner {
+  margin-bottom: 16px;
+}
+
+.edit-banner p {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+/* 月別 */
+.month-nav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-nav h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.month-total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.month-total-label,
+.month-total-count {
+  color: var(--muted);
+}
+
+.month-total-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.summary {
+  margin-top: 20px;
+}
+
+.summary h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.bars,
+.records {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar-item {
+  margin-bottom: 10px;
+}
+
+.bar-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.bar-value {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-track {
+  margin-top: 2px;
+}
+
+/* 棒は1色。基準線側は角を立て、先端だけ丸める */
+.bar {
+  height: 10px;
+  min-width: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+
+.day {
+  margin-bottom: 12px;
+}
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 4px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+}
+
+.record-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.record-title {
+  overflow-wrap: anywhere;
+}
+
+.record-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.record-amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#monthly-retry {
+  margin-bottom: 12px;
 }

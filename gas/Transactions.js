@@ -1,30 +1,58 @@
 /**
- * action "add" / "list" の処理と入力チェック。
+ * action "add" / "list" / "update" / "delete" の処理と入力チェック。
  */
 
 const SOURCES = ['manual', 'receipt'];
 const MAX_TEXT_LENGTH = 200;
 const MAX_MEMO_LENGTH = 1000;
 const MAX_ABS_AMOUNT = 100000000;
+const NOT_FOUND_MESSAGE = '指定された記録が見つかりません（ほかの端末で削除された可能性があります）';
 
 /**
  * 1件追加し、保存した内容を返す。
  * data: { date, store, category, amount, payment, memo, source }
  */
 function addTransaction(data) {
-  const record = {
-    id: Utilities.getUuid(),
+  const record = Object.assign({ id: Utilities.getUuid() }, readEditableFields(data), {
+    source: requireSource(data.source),
+    created_at: new Date().toISOString(),
+  });
+  appendRecord(record);
+  return record;
+}
+
+/** 追加と修正で共通の項目（date〜memo）を検査して返す。 */
+function readEditableFields(data) {
+  return {
     date: requireDate(data.date),
     store: optionalText(data.store, 'store', MAX_TEXT_LENGTH),
     category: optionalText(data.category, 'category', MAX_TEXT_LENGTH),
     amount: requireAmount(data.amount),
     payment: optionalText(data.payment, 'payment', MAX_TEXT_LENGTH),
     memo: optionalText(data.memo, 'memo', MAX_MEMO_LENGTH),
-    source: requireSource(data.source),
-    created_at: new Date().toISOString(),
   };
-  appendRecord(record);
+}
+
+/**
+ * id を指定して1件を修正し、修正後の内容を返す。id・source・created_at は変えない。
+ * data: { id, date, store, category, amount, payment, memo }
+ */
+function updateTransaction(data) {
+  const id = requireId(data.id);
+  const record = updateRecord(id, readEditableFields(data));
+  if (!record) {
+    throw new ClientError(NOT_FOUND_MESSAGE);
+  }
   return record;
+}
+
+/** id を指定して1件を削除する。 */
+function deleteTransaction(data) {
+  const id = requireId(data.id);
+  if (!deleteRecord(id)) {
+    throw new ClientError(NOT_FOUND_MESSAGE);
+  }
+  return id;
 }
 
 /**
@@ -69,6 +97,13 @@ function isValidDate(value) {
 function requireAmount(value) {
   if (!Number.isInteger(value) || Math.abs(value) > MAX_ABS_AMOUNT) {
     throw new ClientError('amount は整数（円）で指定してください');
+  }
+  return value;
+}
+
+function requireId(value) {
+  if (typeof value !== 'string' || !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new ClientError('id が不正です');
   }
   return value;
 }

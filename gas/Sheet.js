@@ -15,6 +15,8 @@ const COLUMNS = [
   'source',
   'created_at',
 ];
+// 修正できる列。COLUMNS の中で連続している必要がある（まとめて書き換えるため）。
+const EDITABLE_COLUMNS = ['date', 'store', 'category', 'amount', 'payment', 'memo'];
 
 /**
  * 初回に1度だけ、エディタから手動で実行する。
@@ -77,6 +79,75 @@ function appendRecord(record) {
   }
 }
 
+/**
+ * id の行の、修正できる列（date〜memo）を書き換え、書き換え後の1行を返す。
+ * 見つからなければ null を返す。id・source・created_at の列には触れない。
+ */
+function updateRecord(id, fields) {
+  const first = COLUMNS.indexOf(EDITABLE_COLUMNS[0]);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getTransactionsSheet();
+    const row = findRowById(sheet, id);
+    if (!row) {
+      return null;
+    }
+    const values = EDITABLE_COLUMNS.map((name) => toCellValue(fields[name]));
+    sheet.getRange(row, first + 1, 1, values.length).setValues([values]);
+    SpreadsheetApp.flush();
+    return readRow(sheet, row);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** id の行を削除する。見つからなければ false を返す。 */
+function deleteRecord(id) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getTransactionsSheet();
+    const row = findRowById(sheet, id);
+    if (!row) {
+      return false;
+    }
+    sheet.deleteRow(row);
+    SpreadsheetApp.flush();
+    return true;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** id の列から行を探し、行番号（2以上）を返す。見つからなければ 0。ロックの中で呼ぶ。 */
+function findRowById(sheet, id) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return 0;
+  }
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === id) {
+      return i + 2;
+    }
+  }
+  return 0;
+}
+
+function readRow(sheet, row) {
+  const timeZone = sheet.getParent().getSpreadsheetTimeZone();
+  return toRecord(sheet.getRange(row, 1, 1, COLUMNS.length).getValues()[0], timeZone);
+}
+
+function toRecord(row, timeZone) {
+  const record = {};
+  COLUMNS.forEach((name, i) => {
+    record[name] = fromCellValue(name, row[i], timeZone);
+  });
+  return record;
+}
+
 /** 見出し行を除く全行を、COLUMNS のキーを持つオブジェクトの配列で返す。 */
 function readRecords() {
   const sheet = getTransactionsSheet();
@@ -86,13 +157,7 @@ function readRecords() {
   }
   const timeZone = sheet.getParent().getSpreadsheetTimeZone();
   const values = sheet.getRange(2, 1, lastRow - 1, COLUMNS.length).getValues();
-  return values.map((row) => {
-    const record = {};
-    COLUMNS.forEach((name, i) => {
-      record[name] = fromCellValue(name, row[i], timeZone);
-    });
-    return record;
-  });
+  return values.map((row) => toRecord(row, timeZone));
 }
 
 /**

@@ -18,13 +18,21 @@
 
   <nav class="tabs" aria-label="画面の切り替え">
     <button type="button" class="tab" data-view="entry">入力</button>
+    <button type="button" class="tab" data-view="monthly">月別</button>
     <button type="button" class="tab" data-view="settings">設定</button>
   </nav>
 
   <main>
     <!-- 入力（レシートの読み取り結果の確認・修正と共通） -->
     <section id="view-entry" class="view" hidden>
-      <label class="file-button">
+      <div id="edit-banner" class="notice edit-banner" hidden>
+        <p>記録を修正しています。</p>
+        <div class="button-row">
+          <button type="button" id="edit-cancel">やめる</button>
+          <button type="button" id="edit-delete" class="danger">この記録を削除</button>
+        </div>
+      </div>
+      <label class="file-button" id="receipt-button">
         <input id="receipt-input" type="file" accept="image/*">
         <span>レシートを読み取る</span>
       </label>
@@ -70,6 +78,37 @@
         <button type="submit" class="primary">保存</button>
         <p class="status" id="entry-status" role="status" aria-live="polite"></p>
       </form>
+    </section>
+
+    <!-- 月別：集計と一覧（家計データは端末に保存せず、表示のたびに取得する） -->
+    <section id="view-monthly" class="view" hidden>
+      <div class="month-nav">
+        <button type="button" id="month-prev">‹ 前の月</button>
+        <h2 id="month-label"></h2>
+        <button type="button" id="month-next">次の月 ›</button>
+      </div>
+      <p class="status" id="monthly-status" role="status" aria-live="polite"></p>
+      <button type="button" id="monthly-retry" hidden>再読み込み</button>
+      <div id="monthly-content" hidden>
+        <p class="month-total">
+          <span class="month-total-label">合計</span>
+          <span id="month-total" class="month-total-value"></span>
+          <span id="month-count" class="month-total-count"></span>
+        </p>
+        <section class="summary">
+          <h3>カテゴリ別</h3>
+          <ul id="summary-category" class="bars"></ul>
+        </section>
+        <section class="summary">
+          <h3>支払方法別</h3>
+          <ul id="summary-payment" class="bars"></ul>
+        </section>
+        <section class="summary">
+          <h3>一覧</h3>
+          <p class="hint">行を押すと修正・削除できます。</p>
+          <div id="monthly-list"></div>
+        </section>
+      </div>
     </section>
 
     <!-- 設定（この端末の localStorage にだけ保存する） -->
