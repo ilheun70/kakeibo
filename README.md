@@ -245,6 +245,8 @@ curl -sSL "$GAS_URL"
 4. 「入力」の「レシートを読み取る」で撮影するか写真を選び、カード番号などの部分を指でなぞって塗りつぶしてから「読み取る」を押す。
    読み取った内容がフォームに入るので、確認・修正してから「保存」を押す
 5. 「月別」で、月ごとの合計、カテゴリ別・支払方法別の合計、一覧を見る。一覧の行を押すと、その記録を修正・削除できる
+6. 1回の支払いに複数のカテゴリが含まれるときは、入力画面の「カテゴリ別に分ける」で、カテゴリごとの行に分けて保存できる。
+   レシートの明細が複数のカテゴリにまたがるときは、読み取った時点で分けた状態になる（金額は明細の比率で配分）
 
 ## API
 
@@ -258,6 +260,7 @@ curl -sSL "$GAS_URL"
 |---|---|---|
 | `ping` | なし | `{ "ok": true, "message": "pong" }` |
 | `add` | `date`（YYYY-MM-DD、必須）、`amount`（整数、必須）、`source`（`manual` / `receipt`、必須）、`store`・`category`・`payment`・`memo`（文字列、省略可） | `{ "ok": true, "record": { ... } }` |
+| `addMany` | `date`・`source`（必須）、`store`・`payment`・`memo`（省略可）、`splits`（`[{ "category", "amount" }]`、2〜10件） | `{ "ok": true, "records": [ ... ] }`（全行の登録日時が同じ） |
 | `list` | `month`（YYYY-MM、省略可） | `{ "ok": true, "records": [ ... ] }`（日付の新しい順） |
 | `update` | `id`（必須）、ほかは `add` と同じ（`source` を除く） | `{ "ok": true, "record": { ... } }`（id・source・created_at は変わらない） |
 | `delete` | `id`（必須） | `{ "ok": true, "deleted": "<id>" }` |
