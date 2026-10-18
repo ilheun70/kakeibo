@@ -238,11 +238,18 @@ button:disabled {
   font-weight: 600;
 }
 
-#view-entry .file-button {
+.receipt-picker {
   margin-bottom: 16px;
+  text-align: center;
 }
 
-.file-button input {
+.file-link {
+  display: inline-block;
+  margin: 4px 0 0;
+}
+
+.file-button input,
+.file-link input {
   position: absolute;
   width: 1px;
   height: 1px;

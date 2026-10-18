@@ -214,7 +214,8 @@ function setupEntry({ onEditEnd }) {
 
 /** レシートを選ぶ → 塗りつぶす → 読み取る。 */
 function setupReceipt(entry) {
-  const input = document.getElementById('receipt-input');
+  // 撮影用と、写真ライブラリから選ぶ用（予備）
+  const inputs = ['receipt-input', 'receipt-library-input'].map((id) => document.getElementById(id));
   const canvas = document.getElementById('receipt-canvas');
   const undoButton = document.getElementById('receipt-undo');
   const clearButton = document.getElementById('receipt-clear');
@@ -240,7 +241,7 @@ function setupReceipt(entry) {
     canvas.classList.toggle('busy', busy);
   }
 
-  input.addEventListener('change', async () => {
+  async function onFileChange(input) {
     const file = input.files && input.files[0];
     input.value = ''; // 同じ写真をもう一度選んでも change が起きるようにする
     if (!file) return;
@@ -261,7 +262,9 @@ function setupReceipt(entry) {
     setStatus(status, '', '');
     showView('receipt');
     window.scrollTo(0, 0);
-  });
+  }
+
+  inputs.forEach((input) => input.addEventListener('change', () => onFileChange(input)));
 
   undoButton.addEventListener('click', () => editor.undo());
   clearButton.addEventListener('click', () => editor.clearMasks());
