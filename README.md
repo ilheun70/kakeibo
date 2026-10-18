@@ -247,13 +247,15 @@ curl -sSL "$GAS_URL"
 5. 「月別」で、月ごとの合計、カテゴリ別・支払方法別の合計、一覧を見る。一覧の行を押すと、その記録を修正・削除できる
 6. 1回の支払いに複数のカテゴリが含まれるときは、入力画面の「カテゴリ別に分ける」で、カテゴリごとの行に分けて保存できる。
    レシートの明細が複数のカテゴリにまたがるときは、読み取った時点で分けた状態になる（金額は明細の比率で配分）
+7. iPad は横向きでも使える。横向きでは、入力は左にレシート・右に入力欄、月別は左に集計・右に一覧を並べる。
+   「保存」ボタンは、入力欄が長いときも画面の下に表示されたままになる
 
 ## API
 
 `doPost` に、JSON文字列を `Content-Type: text/plain` で送ります。
 
 ```json
-{ "token": "<APP_TOKEN>", "action": "ping | add | list | update | delete | readReceipt", "data": { } }
+{ "token": "<APP_TOKEN>", "action": "ping | add | addMany | list | update | delete | readReceipt", "data": { } }
 ```
 
 | action | data | 成功時のレスポンス |
@@ -264,7 +266,7 @@ curl -sSL "$GAS_URL"
 | `list` | `month`（YYYY-MM、省略可） | `{ "ok": true, "records": [ ... ] }`（日付の新しい順） |
 | `update` | `id`（必須）、ほかは `add` と同じ（`source` を除く） | `{ "ok": true, "record": { ... } }`（id・source・created_at は変わらない） |
 | `delete` | `id`（必須） | `{ "ok": true, "deleted": "<id>" }` |
-| `readReceipt` | `image`（JPEG の base64。`data:` の接頭辞なし、必須） | `{ "ok": true, "receipt": { "date", "store", "amount", "category", "payment", "items": [{ "name", "price" }] } }`（読み取れなかった項目は `null`。シートには保存しない） |
+| `readReceipt` | `image`（JPEG の base64。`data:` の接頭辞なし、必須） | `{ "ok": true, "receipt": { "date", "store", "amount", "category", "payment", "items": [{ "name", "price", "category" }] } }`（読み取れなかった項目は `null`。シートには保存しない） |
 
 失敗時は `{ "ok": false, "error": "..." }` を返します。HTTPステータスでは成否を区別しません。
 
