@@ -199,6 +199,25 @@ button:disabled {
   gap: 12px;
 }
 
+/* 保存ボタンと結果の表示：入力欄が長くても押せるよう、画面の下に固定する */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.form-actions .status {
+  margin: 4px 0 0;
+}
+
+/* 何も表示していないときは、固定した部分を低くする */
+.form-actions .status:empty {
+  display: none;
+}
+
 .status {
   min-height: 1.6em;
   margin: 12px 0 0;
@@ -533,4 +552,77 @@ button.danger.armed {
 
 .split-group li:last-child .record {
   border-bottom: none;
+}
+
+/*
+ * 横向き
+ * - レシートの塗りつぶし画面：左に画像、右に説明とボタン（スクロールせずに「読み取る」を押せるように）
+ * - 画面の幅が 900px 以上（iPad の横向き）：入力は左にレシート・右にフォーム、月別は左に集計・右に一覧
+ */
+@media (orientation: landscape) {
+  .app-header,
+  .tabs,
+  main {
+    max-width: 1100px;
+  }
+
+  .view {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  #view-receipt {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "canvas intro"
+      "canvas controls";
+    column-gap: 24px;
+    max-width: none;
+  }
+
+  .receipt-intro {
+    grid-area: intro;
+    margin-top: 0;
+  }
+
+  /* 見出しとタブの高さを引いた分まで大きくする（低い画面では、縦向きと同じ 70vh を下限にする） */
+  .mask-canvas {
+    grid-area: canvas;
+    justify-self: center;
+    margin: 0;
+    max-height: max(calc(100vh - 150px), 70vh);
+  }
+
+  .receipt-controls {
+    grid-area: controls;
+  }
+}
+
+@media (orientation: landscape) and (min-width: 900px) {
+  #view-entry,
+  #view-monthly {
+    max-width: none;
+  }
+
+  #view-entry,
+  #monthly-content {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  /* 一覧をスクロールしても、集計は見えたままにする */
+  .monthly-summary {
+    position: sticky;
+    top: env(safe-area-inset-top);
+    max-height: calc(100vh - env(safe-area-inset-top));
+    overflow-y: auto;
+  }
+
+  .monthly-records {
+    margin-top: 4px;
+  }
 }
