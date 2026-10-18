@@ -25,32 +25,35 @@
   <main>
     <!-- 入力（レシートの読み取り結果の確認・修正と共通） -->
     <section id="view-entry" class="view" hidden>
-      <div id="edit-banner" class="notice edit-banner" hidden>
-        <p>記録を修正しています。</p>
-        <div class="button-row">
-          <button type="button" id="edit-cancel">やめる</button>
-          <button type="button" id="edit-delete" class="danger">この記録を削除</button>
+      <!-- iPad の横向きでは、この部分を左の列、フォームを右の列に並べる -->
+      <div class="entry-side">
+        <div id="edit-banner" class="notice edit-banner" hidden>
+          <p>記録を修正しています。</p>
+          <div class="button-row">
+            <button type="button" id="edit-cancel">やめる</button>
+            <button type="button" id="edit-delete" class="danger">この記録を削除</button>
+          </div>
         </div>
-      </div>
-      <div id="receipt-button" class="receipt-picker">
-        <!-- capture を付けると、選択肢を出さずにカメラが開く（背面カメラを指定） -->
-        <label class="file-button">
-          <input id="receipt-input" type="file" accept="image/*" capture="environment">
-          <span>レシートを撮影して読み取る</span>
-        </label>
-        <!-- OS の更新でカメラが使えなくなったときの予備 -->
-        <label class="link-button file-link">
-          <input id="receipt-library-input" type="file" accept="image/*">
-          <span>写真ライブラリから選ぶ</span>
-        </label>
-      </div>
-      <div id="receipt-result" class="notice receipt-result" hidden>
-        <p id="receipt-result-text"></p>
-        <details id="receipt-items-box">
-          <summary>読み取った明細（参考。保存はされません）</summary>
-          <ul id="receipt-items" class="receipt-items"></ul>
-        </details>
-        <button type="button" id="receipt-discard">読み取り結果を取り消す</button>
+        <div id="receipt-button" class="receipt-picker">
+          <!-- capture を付けると、選択肢を出さずにカメラが開く（背面カメラを指定） -->
+          <label class="file-button">
+            <input id="receipt-input" type="file" accept="image/*" capture="environment">
+            <span>レシートを撮影して読み取る</span>
+          </label>
+          <!-- OS の更新でカメラが使えなくなったときの予備 -->
+          <label class="link-button file-link">
+            <input id="receipt-library-input" type="file" accept="image/*">
+            <span>写真ライブラリから選ぶ</span>
+          </label>
+        </div>
+        <div id="receipt-result" class="notice receipt-result" hidden>
+          <p id="receipt-result-text"></p>
+          <details id="receipt-items-box">
+            <summary>読み取った明細（参考。保存はされません）</summary>
+            <ul id="receipt-items" class="receipt-items"></ul>
+          </details>
+          <button type="button" id="receipt-discard">読み取り結果を取り消す</button>
+        </div>
       </div>
       <form id="entry-form" novalidate autocomplete="off">
         <div class="field">
@@ -96,8 +99,11 @@
           <textarea id="entry-memo" name="memo" rows="2" maxlength="1000"></textarea>
           <p class="field-error" data-error-for="memo"></p>
         </div>
-        <button type="submit" class="primary">保存</button>
-        <p class="status" id="entry-status" role="status" aria-live="polite"></p>
+        <!-- 入力欄が長くても押せるよう、画面の下に固定する -->
+        <div class="form-actions">
+          <button type="submit" class="primary">保存</button>
+          <p class="status" id="entry-status" role="status" aria-live="polite"></p>
+        </div>
       </form>
     </section>
 
@@ -111,20 +117,22 @@
       <p class="status" id="monthly-status" role="status" aria-live="polite"></p>
       <button type="button" id="monthly-retry" hidden>再読み込み</button>
       <div id="monthly-content" hidden>
-        <p class="month-total">
-          <span class="month-total-label">合計</span>
-          <span id="month-total" class="month-total-value"></span>
-          <span id="month-count" class="month-total-count"></span>
-        </p>
-        <section class="summary">
-          <h3>カテゴリ別</h3>
-          <ul id="summary-category" class="bars"></ul>
-        </section>
-        <section class="summary">
-          <h3>支払方法別</h3>
-          <ul id="summary-payment" class="bars"></ul>
-        </section>
-        <section class="summary">
+        <div class="monthly-summary">
+          <p class="month-total">
+            <span class="month-total-label">合計</span>
+            <span id="month-total" class="month-total-value"></span>
+            <span id="month-count" class="month-total-count"></span>
+          </p>
+          <section class="summary">
+            <h3>カテゴリ別</h3>
+            <ul id="summary-category" class="bars"></ul>
+          </section>
+          <section class="summary">
+            <h3>支払方法別</h3>
+            <ul id="summary-payment" class="bars"></ul>
+          </section>
+        </div>
+        <section class="summary monthly-records">
           <h3>一覧</h3>
           <p class="hint">行を押すと修正・削除できます。</p>
           <div id="monthly-list"></div>
@@ -158,24 +166,26 @@
 
     <!-- レシートの個人情報を塗りつぶしてから読み取る -->
     <section id="view-receipt" class="view" hidden>
-      <p>
+      <p class="receipt-intro">
         カード番号・会員番号・氏名・電話番号・バーコードなど、送りたくない部分を指でなぞって囲むと、黒く塗りつぶします。
         少し広めに囲んでください。
       </p>
       <canvas id="receipt-canvas" class="mask-canvas" aria-label="レシートの画像。なぞった部分を塗りつぶします"></canvas>
-      <div class="button-row">
-        <button type="button" id="receipt-undo">1つ戻す</button>
-        <button type="button" id="receipt-clear">全部消す</button>
+      <div class="receipt-controls">
+        <div class="button-row">
+          <button type="button" id="receipt-undo">1つ戻す</button>
+          <button type="button" id="receipt-clear">全部消す</button>
+        </div>
+        <div class="button-row">
+          <button type="button" id="receipt-cancel">やめる</button>
+          <button type="button" id="receipt-send" class="primary">読み取る</button>
+        </div>
+        <p class="status" id="receipt-status" role="status" aria-live="polite"></p>
+        <p class="hint">
+          塗りつぶした画像を縮小して、Google の Gemini API（無料枠）に送ります。元の写真は送りません。
+          無料枠に送った内容は Google の製品改善に使われ、人が確認する場合があります。
+        </p>
       </div>
-      <div class="button-row">
-        <button type="button" id="receipt-cancel">やめる</button>
-        <button type="button" id="receipt-send" class="primary">読み取る</button>
-      </div>
-      <p class="status" id="receipt-status" role="status" aria-live="polite"></p>
-      <p class="hint">
-        塗りつぶした画像を縮小して、Google の Gemini API（無料枠）に送ります。元の写真は送りません。
-        無料枠に送った内容は Google の製品改善に使われ、人が確認する場合があります。
-      </p>
     </section>
   </main>
 </body>
