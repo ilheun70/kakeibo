@@ -32,10 +32,18 @@
           <button type="button" id="edit-delete" class="danger">この記録を削除</button>
         </div>
       </div>
-      <label class="file-button" id="receipt-button">
-        <input id="receipt-input" type="file" accept="image/*">
-        <span>レシートを読み取る</span>
-      </label>
+      <div id="receipt-button" class="receipt-picker">
+        <!-- capture を付けると、選択肢を出さずにカメラが開く（背面カメラを指定） -->
+        <label class="file-button">
+          <input id="receipt-input" type="file" accept="image/*" capture="environment">
+          <span>レシートを撮影して読み取る</span>
+        </label>
+        <!-- OS の更新でカメラが使えなくなったときの予備 -->
+        <label class="link-button file-link">
+          <input id="receipt-library-input" type="file" accept="image/*">
+          <span>写真ライブラリから選ぶ</span>
+        </label>
+      </div>
       <div id="receipt-result" class="notice receipt-result" hidden>
         <p id="receipt-result-text"></p>
         <details id="receipt-items-box">
